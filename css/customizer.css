@@ -1,0 +1,19 @@
+/* 'Reset' buttons */
+
+#sub-accordion-section-subtle_typography .customize-control {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+#sub-accordion-section-subtle_typography .customize-control-title {
+	width: 100%;
+}
+
+#sub-accordion-section-subtle_typography input {
+	width: auto;
+	flex-grow: 1;
+}
+
+#sub-accordion-section-subtle_typography .reset-button {
+	margin-left: 0.5rem;
+}

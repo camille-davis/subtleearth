@@ -1,0 +1,1132 @@
+# Project-specific Rules
+
+- **Never modify core or plugins**: Never modify WordPress core files (`wp-admin/`, `wp-includes/`) or third-party plugin files.
+- **No JSX syntax**: Do not use JSX in JavaScript files. This theme does not use a build process to transpile JSX. Use `wp.element.createElement()` for creating React elements in WordPress block editor scripts.
+- **No build processes**: Do not implement build tools or processes for JavaScript or CSS (no webpack, babel, npm scripts, etc.). Write vanilla JavaScript and CSS that works directly without compilation or bundling.
+- **No 'use strict'**: Do not use `'use strict'` directive in JavaScript files
+- **Frontend static DOM**: On the frontend, once the page is loaded, new elements will not appear. Do not implement MutationObserver cleanup code or watch for dynamically added/removed elements on the frontend. Scripts can run once on page load without needing to handle dynamic DOM changes.
+
+---
+
+# Instruction Following Rules
+
+**IMPORTANT:** Follow user instructions literally and conservatively.
+
+- **Answer questions literally**: If the user asks a question or requests an explanation, provide the answer/explanation only. Do NOT take action or make changes unless explicitly requested. Questions like "is there...", "can we...", "where is...", "how do I..." should be answered with information only, not implementation.
+- **"Would it be possible" means explanation only**: If the user asks "Would it be possible" or similar feasibility questions, provide an explanation of whether it's possible, how it could be done, and any considerations. Do NOT implement any code changes or modifications. Only provide information and explanations.
+- **"What's the simplest way" means research only**: If the user asks "What's the simplest way" or similar questions (e.g., "What's the best way", "How should I", "What approach"), research and provide information about options and recommendations. Do NOT implement any code changes or modifications. Only provide research, explanations, and recommendations.
+- **"explore why" means explanation only**: If the user says "explore why", provide an explanation in chat only. Do NOT implement any code changes or modifications.
+- **"Investigate" means explanation only**: If the user says "Investigate", provide an explanation in chat only. Do NOT implement any code changes or modifications.
+- **No investigation documents**: When investigating or analyzing something, report findings in chat only. Do NOT create investigation documents, analysis files, or similar documentation unless the user explicitly requests it.
+- **Ask before taking initiative**: If you want to take action beyond what was explicitly requested, ask for confirmation first. Do not assume the user wants additional improvements, refactoring, or optimizations unless they explicitly ask.
+- **Confirm before unprompted work**: Do not implement things the user did not ask for—including migration layers, backward-compatibility shims, dual-reads of old keys, duplicate CSS selectors or variable aliases for legacy names, parallel edits in sibling themes unless requested, or extra docs. If an extra seems useful, **say what you would do and ask for confirmation in chat first**; do not implement it preemptively. Optimize for minimal diff: deliver only what the request implies unless the user approves more.
+- **The request defines scope**: Treat each user message as the contract for what to deliver. Out of scope unless asked or explicitly approved after you propose it: nice-to-haves, "while we're here" edits, speculative hardening, consistency passes across unrelated files, and extra themes/packages.
+- **Propose scope expansion before spending resources**: If you might do more than the request requires, say what you would add in a short message and **wait for explicit approval** before using tools or writing code for it. Do not implement extras first and negotiate after.
+- **Minimal diff**: Prefer the smallest set of edits that fulfills the request. No drive-by refactors, renames, formatting sweeps, or opportunistic cleanup unless the user asked for those specifically.
+- **Project rules override generic helpfulness**: This file’s Instruction Following Rules apply to work in this repo. When they conflict with doing more, doing it “the best way,” or typical assistant habits, follow these rules and ask rather than expand scope.
+- **Ask for clarification when unsure**: If you are uncertain about what the user wants, ask for clarification rather than making assumptions.
+- **Follow instructions exactly**: If the user says "check", "analyze", "review", or "look at" something, do that action only. Do not automatically fix issues found unless explicitly asked to do so.
+- **Be explicit about scope**: When the user requests a change, only make that specific change. Do not make related improvements unless explicitly requested.
+- **Debug statements only**: When asked to "add debug statements", only add console.log statements. Do not modify existing logic, fix bugs, or make other code changes. Only add the debugging output requested.
+- **Spec files stay current**: When a change affects behavior, markup, registered assets, blocks, navigation, or other areas documented in this theme’s spec file(s) (e.g. `THEME-SPEC.md`), update the relevant spec sections in the same task so documentation matches the codebase.
+- **“Rename” is end-to-end**: When the user asks to **rename** a label, setting, token, feature, or color, apply the new name consistently everywhere: user-visible strings, IDs, theme mod / option keys, data/meta keys, CSS custom property names (and every `var(--*)` use), palette/editor slugs (and resulting `has-*` classes), related filters/rgb helper variable names, PHP/JS identifiers, and spec/docs—unless they explicitly limit the change to display text only.
+
+---
+
+# Code Improvement Documentation Rule
+
+**IMPORTANT:** Whenever you improve code quality, refactor, or apply patterns from this document, you MUST add the improvement pattern to `.cursorrules` if it's not already documented. This ensures knowledge is preserved and patterns can be reused.
+
+- If you extract constants, add the pattern to "Constants & Configuration"
+- If you create helper functions, add to "Function & Method Improvements"
+- If you simplify conditionals, add to "Conditional Logic Simplifications"
+- If you use array-based approaches, add to the appropriate section
+- Always include before/after examples when adding new patterns
+- **Generalize examples**: Use generic names, values, and identifiers instead of project-specific ones (e.g., use `setting_1`, `default_value` instead of `background_color_1`, `#FFC066`)
+
+---
+
+# Code-Creation Process
+
+When implementing a new feature or functionality:
+
+1. **Research First**: Before implementing, search the codebase and research multiple implementation approaches. Consider:
+   - WordPress-specific APIs and hooks available
+   - Existing patterns and conventions in the codebase
+   - Different architectural approaches (hooks vs direct calls, filters vs actions, etc.)
+   - Performance implications
+   - Maintainability and extensibility
+
+2. **Present Options**: After research, present the user with:
+   - Multiple viable implementation approaches (typically 2-3 options)
+   - Brief pros/cons for each approach
+   - Recommendation if one approach is clearly superior
+
+3. **Ask Clarifying Questions**: Before proceeding with implementation, ask questions to understand:
+   - User's specific requirements and constraints
+   - Expected behavior and edge cases
+   - Integration points with existing code
+   - Performance or scalability concerns
+   - Future extensibility needs
+
+4. **Wait for Approval**: Do not proceed with implementation until the user has:
+   - Selected an approach from the options presented
+   - Answered any critical clarifying questions
+   - Confirmed they're ready to proceed
+
+---
+
+# Key Principles
+
+1. **DRY (Don't Repeat Yourself)**: Consolidate duplicate logic
+2. **KISS (Keep It Simple, Stupid)**: Remove unnecessary abstractions
+3. **YAGNI (You Aren't Gonna Need It)**: Remove unused features
+4. **Single Responsibility**: Each function has one clear purpose
+5. **Early Returns**: Reduced nesting, clearer flow
+6. **Modern JavaScript**: Use ES6+ features consistently
+7. **WordPress Best Practices**: Leverage native functions
+8. **Security First**: Strict validation, defense in depth
+9. **Scalable Architecture**: Patterns that make adding features easy
+
+---
+
+# Quick Reference: Common Patterns
+
+## Extract Magic Numbers to Constants
+```php
+// Before
+if ( $count >= 3 ) { }
+wp_enqueue_script( 'script', $url, $deps, '1.0.0', true );
+
+// After
+private const RATE_LIMIT = 3;
+private const VERSION = '1.0.0';
+if ( $count >= self::RATE_LIMIT ) { }
+wp_enqueue_script( 'script', $url, $deps, self::VERSION, true );
+```
+
+## Simplify Conditional Returns
+```php
+// Before
+if ( empty( $text ) ) {
+    return false;
+}
+return strpos( $text, 'http' ) !== false;
+
+// After
+return ! empty( $text ) && strpos( $text, 'http' ) !== false;
+```
+
+## Extract Repeated Values
+```php
+// Before
+wp_enqueue_style( 'style', $url, array(), wp_get_theme()->get( 'Version' ) );
+wp_enqueue_script( 'script', $url, array(), wp_get_theme()->get( 'Version' ), true );
+
+// After
+$version = wp_get_theme()->get( 'Version' );
+wp_enqueue_style( 'style', $url, array(), $version );
+wp_enqueue_script( 'script', $url, array(), $version, true );
+```
+
+## Combine Early Returns
+```php
+// Before
+if ( ! isset( $attrs ) ) return;
+if ( ! isset( $attrs['key'] ) ) return;
+if ( ! $attrs['key'] ) return;
+
+// After
+if ( ! isset( $attrs['key'] ) || ! $attrs['key'] ) return;
+```
+
+---
+
+# Code Quality Standards
+
+## Remove Unnecessary Code
+
+- **Unused code**: Remove variables, functions, attributes, and data attributes that are defined but never used
+- **Unused dataset properties**: Remove dataset properties that are set but never read or checked
+  ```javascript
+  // Before
+  block.dataset.processed = 'true';
+  // ... never checked later
+
+  // After
+  // Remove entirely if not needed
+  ```
+- **Redundant CSS properties**: Remove duplicate CSS properties that are already set in base styles or parent selectors
+  ```css
+  /* Before */
+  .element {
+    overflow: hidden;
+  }
+  @media (max-width: 768px) {
+    .element {
+      overflow: hidden; /* Redundant */
+    }
+  }
+
+  /* After */
+  .element {
+    overflow: hidden;
+  }
+  @media (max-width: 768px) {
+    .element {
+      /* Remove redundant property */
+    }
+  }
+  ```
+- **Dead code**: Remove code that cannot execute due to context limitations (e.g., Customizer API code on non-customizer screens)
+- **Unnecessary dependencies**: Only include script/style dependencies that are actually used
+- **Redundant functionality**: Don't duplicate functionality already provided elsewhere (e.g., inline styles + JavaScript, localized data + inline scripts)
+- **Dead code paths**: Remove unreachable else/elseif branches and simplify always-true/false conditionals
+- **Remove redundant checks**: Eliminate unnecessary conditionals and type checks when code is already safe
+- **Variable elimination**: Remove intermediate variables when values are only used once
+
+## Readability and Maintainability
+
+- **DRY principle**: Extract duplicate HTML/code into shared functions
+- **Inline simple functions**: Inline functions that are only called once or are very simple
+- **Avoid excessive nesting**: Limit nesting depth (prefer early returns, extract functions, use guard clauses). Refactor deeply nested conditionals or loops into separate functions.
+- **Combine similar operations**: Merge multiple similar queries or operations into single statements
+- **Condense function calls**: Single-line formatting for simple function calls
+
+---
+
+# PHP Patterns
+
+## Conditional Logic
+Use null coalescing and concise conditionals:
+- ✅ `$value = $attributes['key'] ?? 'default';`
+- ✅ `$has_feature = ( $post && has_block( 'namespace/block', $post ) ) || is_page_template( 'custom-template.php' );`
+- ❌ Verbose if/else chains for simple defaults
+
+## Template Rendering
+Direct attribute access and inline conditionals:
+- ✅ `$attributes['key'] ?? 'default'`
+- ✅ `<?php if ( $show ) : ?>`
+- **Conditional HTML Attributes**: Build optional attributes inline using ternary operators
+  ```php
+  // Before: Intermediate variable
+  $target = $open_new_tab ? ' target="_blank" rel="noopener noreferrer"' : '';
+  return '<a href="' . esc_url( $url ) . '"' . $target . '>';
+
+  // After: Inline ternary
+  return '<a href="' . esc_url( $url ) . '"' . ( $open_new_tab ? ' target="_blank" rel="noopener noreferrer"' : '' ) . '>';
+  ```
+
+## Validation Logic
+Combine related validations into single statements:
+- ✅ `if ( empty( $name ) || empty( $email ) || ! is_email( $email ) || empty( $message ) )`
+
+## Constants & Configuration
+- **Extract Magic Numbers**: Replace hardcoded values with named constants
+  - Rate limits: `private const RATE_LIMIT = 3;`
+  - Versions: `private const VERSION = '1.0.0';`
+  - Timeouts: `private const TIMEOUT = 30;`
+- **Extract Array Constants**: Extract repeated arrays to top-level constants
+  ```php
+  // Before: Array defined in function
+  function validate_upload( $data, $file, $filename, $mimes, $real_mime ) {
+      $allowed_mimes = array( 'type1', 'type2', 'type3' );
+      if ( in_array( $real_mime, $allowed_mimes, true ) ) { }
+  }
+
+  // After: Top-level constant
+  const ALLOWED_MIMES = array( 'type1', 'type2', 'type3' );
+  function validate_upload( $data, $file, $filename, $mimes, $real_mime ) {
+      if ( in_array( $real_mime, ALLOWED_MIMES, true ) ) { }
+  }
+  ```
+- **Extract Repeated Function Calls**: Cache expensive or repeated function results
+  ```php
+  // Before: Repeated expensive calls
+  wp_enqueue_style( 'style', $url, array(), wp_get_theme()->get( 'Version' ) );
+  wp_enqueue_script( 'script', $url, array(), wp_get_theme()->get( 'Version' ), true );
+
+  // After: Helper function with static caching
+  function get_theme_version() {
+      static $version = null;
+      if ( null === $version ) {
+          $version = wp_get_theme()->get( 'Version' );
+      }
+      return $version;
+  }
+  wp_enqueue_style( 'style', $url, array(), get_theme_version() );
+  ```
+- **Extract Repeated Path/URL Calculations**: Store plugin/theme paths and URLs as class properties
+  ```php
+  // Before: Repeated path calculations
+  public function register_block() {
+      $plugin_dir = dirname( dirname( __FILE__ ) );
+      $plugin_url = plugin_dir_url( dirname( __FILE__ ) );
+      // ... use $plugin_dir and $plugin_url
+  }
+  public function enqueue_scripts() {
+      $plugin_url = plugin_dir_url( dirname( __FILE__ ) );
+      // ... use $plugin_url
+  }
+
+  // After: Store as class properties
+  private $plugin_dir;
+  private $plugin_url;
+
+  public function __construct() {
+      $this->plugin_dir = dirname( dirname( __FILE__ ) );
+      $this->plugin_url = plugin_dir_url( dirname( __FILE__ ) );
+  }
+  public function register_block() {
+      // ... use $this->plugin_dir and $this->plugin_url
+  }
+  ```
+- **Centralized Configuration**: Single source of truth for feature definitions
+- **Share Constants Between Classes**: Make constants public when needed by other classes
+  ```php
+  // In Class A
+  public const CONFIG_VALUE = 'value';
+
+  // In Class B
+  $value = ClassA::CONFIG_VALUE;
+  ```
+- **Extract Default Values to Constants**: Group related defaults into constant arrays
+  ```php
+  // Before: Hardcoded defaults scattered throughout code
+  $value1 = get_theme_mod( 'setting_1', 'default_value_1' );
+  $value2 = get_theme_mod( 'setting_2', 'default_value_2' );
+
+  // After: Centralized defaults
+  private const DEFAULT_VALUES = array(
+      'setting_1' => 'default_value_1',
+      'setting_2' => 'default_value_2',
+  );
+  $value1 = get_theme_mod( 'setting_1', self::DEFAULT_VALUES['setting_1'] );
+  ```
+
+## Conditional Logic Simplifications
+- **Combine Early Returns**: Merge multiple early return conditions
+  ```php
+  // Before
+  if ( ! isset( $_POST['nonce'] ) ) return;
+  if ( ! wp_verify_nonce( $_POST['nonce'], 'action' ) ) return;
+  if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+  if ( ! current_user_can( 'edit_post', $post_id ) ) return;
+
+  // After
+  $nonce = $_POST['nonce'] ?? '';
+  if ( ! wp_verify_nonce( $nonce, 'action' ) ||
+       ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) ||
+       ! current_user_can( 'edit_post', $post_id ) ) {
+      return;
+  }
+  ```
+- **Simplify Boolean Checks**: Use direct boolean checks instead of `empty()` when appropriate
+- **Ternary for Simple Conditionals**: Use ternary for single-value conditionals
+  ```php
+  // Before
+  if ( ! empty( $email ) && is_email( $email ) ) {
+      return $email;
+  }
+  return get_option( 'admin_email' );
+
+  // After
+  return ! empty( $email ) && is_email( $email ) ? $email : get_option( 'admin_email' );
+  ```
+- **Ternary for Simple Return Statements**: Use ternary for conditional returns
+  ```php
+  // Before
+  if ( strpos( $src, 'ver=' ) ) {
+      $src = remove_query_arg( 'ver', $src );
+  }
+  return $src;
+
+  // After
+  return strpos( $src, 'ver=' ) ? remove_query_arg( 'ver', $src ) : $src;
+  ```
+- **Elvis Operator for Defaults**: Use `?:` for simple default value assignment
+  ```php
+  // Before
+  $selected_color = get_post_meta( $post->ID, '_meta_key', true );
+  if ( empty( $selected_color ) ) {
+      $selected_color = self::DEFAULT_VALUE;
+  }
+
+  // After
+  $selected_color = get_post_meta( $post->ID, '_meta_key', true ) ?: self::DEFAULT_VALUE;
+  ```
+- **Array-Based Feature Checking**: Use arrays to check multiple features
+- **Array-Based Control Registration**: Use arrays to register multiple similar controls
+- **Array-Based Attribute/Control Generation**: Use arrays to generate similar attributes and controls
+  ```javascript
+  // Before: Repeated attribute definitions
+  attributes: {
+      desktopColumnsPerRow: { type: 'string', default: '' },
+      mediumColumnsPerRow: { type: 'string', default: '' },
+      tabletColumnsPerRow: { type: 'string', default: '' },
+      mobileColumnsPerRow: { type: 'string', default: '' },
+  }
+
+  // After: Array-based generation
+  const breakpoints = ['desktop', 'medium', 'tablet', 'mobile'];
+  const attributes = {};
+  breakpoints.forEach(breakpoint => {
+      attributes[`${breakpoint}ColumnsPerRow`] = {
+          type: 'string',
+          default: '',
+      };
+  });
+  ```
+  ```javascript
+  // Before: Repeated SelectControls
+  el(SelectControl, { label: 'Desktop', value: attributes.desktopColumnsPerRow || '', ... }),
+  el(SelectControl, { label: 'Medium', value: attributes.mediumColumnsPerRow || '', ... }),
+  // ... repeated for each
+
+  // After: Array-based generation
+  const controls = breakpoints.map(breakpoint => {
+      const label = breakpoint.charAt(0).toUpperCase() + breakpoint.slice(1);
+      const attrKey = `${breakpoint}ColumnsPerRow`;
+      return el(SelectControl, {
+          key: breakpoint,
+          label: label,
+          value: attributes[attrKey] || '',
+          onChange: (value) => setAttributes({ [attrKey]: value }),
+      });
+  });
+  ```
+  ```php
+  // Before: Repeated attribute handling
+  $desktop = $attrs['desktopColumnsPerRow'] ?? '';
+  $medium = $attrs['mediumColumnsPerRow'] ?? $desktop;
+  $tablet = $attrs['tabletColumnsPerRow'] ?? $medium;
+  $mobile = $attrs['mobileColumnsPerRow'] ?? $tablet;
+
+  // After: Array-based with cascading defaults
+  $breakpoints = array( 'desktop', 'medium', 'tablet', 'mobile' );
+  $values = array();
+  $prev_value = '';
+  foreach ( $breakpoints as $breakpoint ) {
+      $attr_key = $breakpoint . 'ColumnsPerRow';
+      $values[ $breakpoint ] = $attrs[ $attr_key ] ?? $prev_value;
+      $prev_value = $values[ $breakpoint ];
+  }
+  ```
+- **Array-Based Variable Building**: Use mapping arrays with foreach to build related variables
+  ```php
+  // Before: Repeated pattern for each color
+  $custom_css_variables = array(
+      'background-color-1'        => $background_color_1,
+      'background-color-1-filter' => Subtle_Color_Converter::hex_to_css_filter( $background_color_1 ),
+      'background-color-1-rgb'    => implode( ',', Subtle_Color_Converter::hex_to_rgb( $background_color_1 ) ),
+      'background-color-2'        => $background_color_2,
+      'background-color-2-filter' => Subtle_Color_Converter::hex_to_css_filter( $background_color_2 ),
+      // ... repeated for each color
+  );
+
+  // After: Array-based mapping
+  $color_map = array(
+      'background_color_1' => 'background-color-1',
+      'background_color_2' => 'background-color-2',
+  );
+  $color_variables = array();
+  foreach ( $color_map as $setting_id => $css_var ) {
+      $color = $color_settings[ $setting_id ];
+      $color_variables[ $css_var ] = $color;
+      $color_variables[ $css_var . '-filter' ] = Subtle_Color_Converter::hex_to_css_filter( $color );
+      $color_variables[ $css_var . '-rgb' ] = implode( ',', Subtle_Color_Converter::hex_to_rgb( $color ) );
+  }
+  ```
+  ```php
+  // Before: Repeated code for each control
+  $wp_customize->add_setting( 'setting_1', array( 'default' => 'default_1', ... ) );
+  $wp_customize->add_control( 'setting_1', array( 'label' => __( 'Setting 1', 'textdomain' ), ... ) );
+  $wp_customize->add_setting( 'setting_2', array( 'default' => 'default_2', ... ) );
+  $wp_customize->add_control( 'setting_2', array( 'label' => __( 'Setting 2', 'textdomain' ), ... ) );
+
+  // After: Array-based approach
+  $controls = array(
+      'setting_1' => __( 'Setting 1', 'textdomain' ),
+      'setting_2' => __( 'Setting 2', 'textdomain' ),
+  );
+  foreach ( $controls as $setting_id => $label ) {
+      $this->register_control( $wp_customize, $setting_id, $label, 'section_name' );
+  }
+  ```
+
+## Function & Method Improvements
+- **Inline Single-Use Functions**: Remove abstraction when function is used only once
+- **Extract Reusable Helpers**: Create helpers for repeated patterns
+  ```php
+  // Before: Repeated pattern
+  $wp_customize->add_setting( 'setting_1', array( 'default' => 'default_1', 'sanitize_callback' => 'sanitize_text_field' ) );
+  $wp_customize->add_control( 'setting_1', array( 'label' => __( 'Setting 1', 'textdomain' ), 'section' => 'section_name', 'type' => 'text' ) );
+  // ... repeated for each control
+
+  // After: Helper method
+  private function register_control( $wp_customize, $setting_id, $label, $section ) {
+      $wp_customize->add_setting( $setting_id, array( 'default' => self::DEFAULTS[ $setting_id ], 'sanitize_callback' => 'sanitize_text_field' ) );
+      $wp_customize->add_control( $setting_id, array( 'label' => $label, 'section' => $section, 'type' => 'text' ) );
+  }
+  ```
+- **Extract Complex Conditionals**: Move complex conditional logic into named helper methods
+  ```php
+  // Before: Complex logic inline
+  public function enqueue_scripts() {
+      $post = get_post();
+      $has_block = $post && has_block( 'namespace/block', $post );
+      if ( ! $has_block ) {
+          $widgets = get_option( 'widget_block', array() );
+          $widget_content = '';
+          foreach ( $widgets as $widget ) {
+              if ( ! empty( $widget['content'] ) ) {
+                  $widget_content .= $widget['content'];
+              }
+          }
+          $has_block = ! empty( $widget_content ) && has_block( 'namespace/block', $widget_content );
+      }
+      if ( ! $has_block ) {
+          return;
+      }
+      // ... enqueue scripts
+  }
+
+  // After: Extract to helper method
+  public function enqueue_scripts() {
+      if ( ! $this->has_block() ) {
+          return;
+      }
+      // ... enqueue scripts
+  }
+  private function has_block() {
+      $post = get_post();
+      if ( $post && has_block( 'namespace/block', $post ) ) {
+          return true;
+      }
+      // Check widgets...
+      return false;
+  }
+  ```
+- **Unified Parameter Functions**: Combine similar functions into one
+- **Single-Pass Processing**: Build output directly instead of intermediate arrays
+
+## Code Organization
+- **Section Headers**: Use visual separators to group related functionality
+  ```php
+  // ============================================================================
+  // Block Registration
+  // ============================================================================
+  ```
+- **Modular Class Structure**: Break monolithic classes into focused modules
+- **Prefer get_post() over global $post**: Use WordPress function instead of global variable
+  ```php
+  // Before
+  global $post;
+  if ( ! $post || 'page' !== $post->post_type ) {
+      return;
+  }
+
+  // After
+  $post = get_post();
+  if ( ! $post || 'page' !== $post->post_type ) {
+      return;
+  }
+  ```
+- **Prefer $GLOBALS over global keyword**: More concise for single-use global access
+  ```php
+  // Before
+  global $post_type;
+  if ( 'page' !== $post_type ) {
+      return;
+  }
+
+  // After
+  if ( ( $GLOBALS['post_type'] ?? '' ) !== 'page' ) {
+      return;
+  }
+  ```
+
+---
+
+# JavaScript Patterns
+
+## Modern Syntax
+- **Use const/let**: Prefer `const`/`let` instead of `var`
+- **Arrow Functions**: Use arrow functions for callbacks
+  ```javascript
+  // Before
+  addFilter( 'hook', 'namespace', function( settings, name ) { });
+
+  // After
+  addFilter( 'hook', 'namespace', ( settings, name ) => { });
+  ```
+- **Modern String Methods**: Use `includes()` instead of `indexOf()`, `startsWith()` instead of `indexOf() === 0`
+  ```javascript
+  // Before
+  if (typeof image.alt === 'string' && image.alt.indexOf('This image has an empty alt attribute') === 0) { }
+
+  // After
+  if (typeof image.alt === 'string' && image.alt.startsWith('This image has an empty alt attribute')) { }
+  ```
+- **Destructure Props**: Extract object properties
+- **URLSearchParams**: Use URLSearchParams instead of manual string building
+
+## Event Handling
+- **Event Delegation**: Use event delegation
+  - ✅ `$(document).on('submit', '.form-selector', function(e) { ... });`
+  - ❌ `$(document).ready(function() { $('.form-selector').on('submit', ...); });`
+
+## AJAX & Block Editor
+- **AJAX Callbacks**: Simplify success/error handling with ternary operators
+- **Block Editor**: Use concise React element creation
+  - ✅ `el('div', props, content)` instead of verbose `createElement` calls
+  - ✅ Arrow functions: `({ attributes, setAttributes }) => ...`
+
+## Editor Iframe Modifications
+When making JavaScript modifications to elements inside the WordPress block editor iframe, use the MutationObserver pattern to wait for the iframe and target elements to be available:
+
+```javascript
+function modifyEditorIframe( targetSelector, callback ) {
+	const blockEditor = document.getElementById('editor');
+	if (!blockEditor) {
+		return;
+	}
+
+	const observer = new MutationObserver(() => {
+		const iframe = document.querySelector('iframe');
+		if (!iframe) {
+			return;
+		}
+
+		const targetElement = iframe.contentDocument.querySelector(targetSelector);
+		if (!targetElement) {
+			return;
+		}
+
+		callback(targetElement);
+		observer.disconnect();
+	});
+	observer.observe(blockEditor, { childList: true, subtree: true });
+}
+
+// Usage example:
+modifyEditorIframe('.editor-styles-wrapper', (element) => {
+	element.classList.add('example-editor-class');
+});
+```
+
+**Pattern details:**
+- Observe the `#editor` element (the block editor container)
+- Check for iframe existence first
+- Check for target element in `iframe.contentDocument`
+- Execute callback when target element is found
+- Always disconnect observer after successful modification
+- Use `{ childList: true, subtree: true }` as observer options
+
+## Consolidation
+- **Consolidate Selectors**: Use single query selectors with appropriate combinators instead of multiple separate queries
+
+## Waiting for DOM to load
+- **Simplify DOM Ready Checks**: `DOMContentLoaded` event fires even if DOM is already loaded
+  ```javascript
+  // Before
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  // After
+  document.addEventListener('DOMContentLoaded', init);
+  ```
+
+## DOM Element Object Storage
+- **Store Objects on Elements, Not in dataset**: Use direct element properties for storing objects (like ResizeObserver, MutationObserver), not `dataset` properties. `dataset` only stores strings, so objects cannot be stored there.
+  ```javascript
+  // Before: Won't work - dataset only stores strings
+  element.dataset.observer = resizeObserver;
+  element.dataset.observer.disconnect(); // TypeError: disconnect is not a function
+
+  // After: Store object directly on element
+  element._customObserver = resizeObserver;
+  if (element._customObserver) {
+    element._customObserver.disconnect();
+  }
+  ```
+- **Use Descriptive Property Names**: Prefix custom properties with underscore to avoid conflicts (e.g., `_customObserver`, `_slideshowInterval`)
+
+---
+
+# Security & Validation
+
+## Input Sanitization
+Always sanitize user input using WordPress functions:
+- ✅ `sanitize_text_field()` - For single-line text
+- ✅ `sanitize_email()` - For email addresses
+- ✅ `sanitize_textarea_field()` - For multi-line text
+- ✅ `sanitize_url()` - For URLs
+- ✅ `esc_url_raw()` - For URLs that will be escaped later
+
+```php
+// Before
+$name = $_POST['name'];
+$email = $_POST['email'];
+
+// After
+$name = isset( $_POST['name'] ) ? sanitize_text_field( $_POST['name'] ) : '';
+$email = isset( $_POST['email'] ) ? sanitize_email( $_POST['email'] ) : '';
+```
+
+## Output Escaping
+Always escape output for the appropriate context:
+- ✅ `esc_html()` - For HTML content
+- ✅ `esc_attr()` - For HTML attributes
+- ✅ `esc_url()` - For URLs in attributes/href
+- ✅ `esc_js()` - For JavaScript strings
+- ✅ `esc_html_e()` - For translatable HTML strings
+
+```php
+// Before
+<div class="<?php echo $class; ?>"><?php echo $content; ?></div>
+
+// After
+<div class="<?php echo esc_attr( $class ); ?>"><?php echo esc_html( $content ); ?></div>
+```
+
+## Nonce Verification
+Always verify nonces for form submissions and AJAX requests:
+```php
+// Create nonce
+wp_nonce_field( 'action_name', 'nonce_field_name' );
+// Or for AJAX
+wp_localize_script( 'script', 'data', array( 'nonce' => wp_create_nonce( 'action_name' ) ) );
+
+// Verify nonce
+if ( ! isset( $_POST['nonce_field_name'] ) || ! wp_verify_nonce( $_POST['nonce_field_name'], 'action_name' ) ) {
+    wp_die( 'Security check failed' );
+}
+```
+
+## ABSPATH Checks
+Always check for `ABSPATH` in included files to prevent direct access:
+```php
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+```
+
+## Email Validation
+Always validate email addresses:
+```php
+// Before
+$email = sanitize_email( $_POST['email'] );
+if ( ! empty( $email ) ) {
+    // use email
+}
+
+// After
+$email = isset( $_POST['email'] ) ? sanitize_email( $_POST['email'] ) : '';
+if ( ! empty( $email ) && is_email( $email ) ) {
+    // use email
+}
+```
+
+## Prevent Header Injection
+Check for newlines in user input before using in email headers:
+```php
+// Before
+$headers[] = 'From: ' . $name . ' <' . $email . '>';
+
+// After
+if ( strpos( $name, "\n" ) !== false || strpos( $name, "\r" ) !== false ||
+     strpos( $email, "\n" ) !== false || strpos( $email, "\r" ) !== false ) {
+    return new WP_Error( 'invalid_input', 'Invalid input detected.' );
+}
+$headers[] = 'From: ' . $name . ' <' . $email . '>';
+```
+
+## Rate Limiting
+Implement rate limiting for form submissions and API calls using WordPress transients:
+```php
+private const RATE_LIMIT = 3;
+private const RATE_LIMIT_WINDOW = HOUR_IN_SECONDS;
+
+private function check_rate_limit() {
+    $ip = $this->get_client_ip();
+    $key = 'rate_limit_' . md5( $ip );
+    $count = get_transient( $key );
+
+    if ( $count && $count >= self::RATE_LIMIT ) {
+        return new WP_Error( 'rate_limit_exceeded', 'Too many requests. Please try again later.' );
+    }
+
+    return true;
+}
+
+private function increment_rate_limit() {
+    $ip = $this->get_client_ip();
+    $key = 'rate_limit_' . md5( $ip );
+    $count = get_transient( $key );
+    set_transient( $key, ( $count ? $count + 1 : 1 ), self::RATE_LIMIT_WINDOW );
+}
+```
+
+## Strict URL Validation
+Use `wp_parse_url()` for proper URL validation instead of string matching:
+```php
+// Before
+if ( strpos( $url, 'example.com' ) === false ) return;
+
+// After
+$parsed = wp_parse_url( $url );
+if ( ! $parsed || empty( $parsed['host'] ) ) return false;
+$host = strtolower( $parsed['host'] );
+$allowed_hosts = array( 'example.com', 'www.example.com' );
+return in_array( $host, $allowed_hosts, true );
+```
+
+## URL Filtering
+When filtering URLs from user input, use comprehensive pattern matching:
+```php
+private function contains_url( $text ) {
+    if ( empty( $text ) ) {
+        return false;
+    }
+
+    $patterns = array(
+        '/https?:\/\//i',
+        '/www\.\w+/i',
+        '/\w+\.(com|org|net|io|co|edu|gov)/i',
+    );
+
+    foreach ( $patterns as $pattern ) {
+        if ( preg_match( $pattern, $text ) ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+```
+
+## Permission Checks
+Always verify user capabilities for admin functions:
+```php
+// Before
+if ( isset( $_POST['save'] ) ) {
+    // save data
+}
+
+// After
+if ( isset( $_POST['save'] ) && current_user_can( 'edit_posts' ) ) {
+    // verify nonce
+    // save data
+}
+```
+
+## Inline Style Security
+Avoid direct inline styles with user-controlled data. Use CSS custom properties (CSS variables) with proper escaping:
+```php
+// Before
+<div style="background-image: url('<?php echo esc_url( $url ); ?>');"></div>
+
+// After
+<div class="image-container" style="--bg-image: url('<?php echo esc_attr( esc_url( $url ) ); ?>');"></div>
+```
+Then use the custom property in CSS:
+```css
+.image-container {
+    background-image: var(--bg-image);
+}
+```
+
+**Why this is safe:** CSS custom properties are properly scoped, and we use `esc_url()` and `esc_attr()` for double escaping. This prevents XSS while avoiding the need for JavaScript.
+
+---
+
+# Performance Optimizations
+
+- **Conditional Script Loading**: Only load scripts when needed
+  ```php
+  public function enqueue_scripts() {
+      if ( ! $this->has_block() ) {
+          return;
+      }
+      // enqueue script
+  }
+  ```
+- **Prevent Duplicate Enqueues**: Check if already enqueued
+  ```php
+  if ( wp_script_is( 'script-handle', 'enqueued' ) ) {
+      return;
+  }
+  ```
+- **Optimize Fetch Frequency**: Only fetch when value changes
+
+---
+
+# WordPress-Specific Patterns
+
+## Block Registration
+- **Use block.json for Block Configuration**: Define block metadata, attributes, and supports in `block.json` rather than in PHP
+  ```json
+  {
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "namespace/block-name",
+    "title": "Block Title",
+    "category": "media",
+    "attributes": {
+      "attributeName": {
+        "type": "string",
+        "default": "default-value"
+      }
+    },
+    "supports": {
+      "anchor": true,
+      "html": false
+    }
+  }
+  ```
+- **Register Block with Render Callback**: Use `register_block_type()` with `block.json` and optional render callback
+  ```php
+  function register_custom_block() {
+    register_block_type( __DIR__, array(
+      'render_callback' => 'render_custom_block',
+    ) );
+  }
+  add_action( 'init', 'register_custom_block' );
+  ```
+- **Extract Version Constant**: Use a constant for plugin/theme version to avoid repetition
+  ```php
+  const PLUGIN_VERSION = '1.0.0';
+  wp_enqueue_script( 'script', $url, array(), PLUGIN_VERSION, true );
+  ```
+
+## Block Editor JavaScript
+- **Use WordPress Globals**: Access WordPress APIs via global objects, not imports
+  ```javascript
+  // ✅ Correct
+  const { registerBlockType } = wp.blocks;
+  const { useBlockProps, InnerBlocks } = wp.blockEditor;
+  const { createElement } = wp.element;
+
+  // ❌ Wrong (requires build step)
+  import { registerBlockType } from '@wordpress/blocks';
+  ```
+- **Template Lock Configuration**: Use `templateLock` attribute in block.json and pass to `useInnerBlocksProps()`
+  ```javascript
+  const innerBlocksProps = useInnerBlocksProps(blockProps, {
+    templateLock: attributes.templateLock || 'all',
+  });
+  ```
+- **Media Library Integration**: Use `MediaUpload` component for image selection
+  ```javascript
+  createElement(MediaUpload, {
+    onSelect: replaceImages,
+    allowedTypes: ['image'],
+    multiple: true,
+    gallery: true,
+    value: imageIds,
+    render: function (obj) {
+      return createElement(Button, {
+        onClick: obj.open,
+      }, __('Select Images'));
+    },
+  })
+  ```
+
+## Script and Style Enqueuing
+- **Conditional Enqueuing**: Only enqueue scripts/styles when needed (e.g., when block is present)
+  ```php
+  function enqueue_block_assets() {
+    if ( ! has_block( 'namespace/block-name' ) ) {
+      return;
+    }
+    wp_enqueue_script( 'block-script', $url, array(), VERSION, true );
+  }
+  add_action( 'wp_enqueue_scripts', 'enqueue_block_assets' );
+  ```
+- **Separate Editor and Frontend Scripts**: Use different hooks for editor vs frontend
+  ```php
+  // Editor scripts
+  add_action( 'enqueue_block_editor_assets', 'enqueue_editor_assets' );
+
+  // Frontend scripts
+  add_action( 'wp_enqueue_scripts', 'enqueue_frontend_assets' );
+  ```
+- **Remove Version in Development**: Use filter to remove version query string during development
+  ```php
+  function remove_version_script( $src ) {
+    if ( defined( 'WP_DEBUG' ) && WP_DEBUG && strpos( $src, 'plugin-name' ) !== false && strpos( $src, 'ver=' ) !== false ) {
+      $src = remove_query_arg( 'ver', $src );
+    }
+    return $src;
+  }
+  add_filter( 'script_loader_src', 'remove_version_script', 9999 );
+  ```
+
+## Render Callbacks
+- **Use WP_HTML_Tag_Processor for Content Modification**: Process block content safely
+  ```php
+  function render_block( $attributes, $content ) {
+    $unique_class = wp_unique_id( 'wp-block-namespace-block-' );
+    $processed = new WP_HTML_Tag_Processor( $content );
+    $processed->next_tag();
+    $processed->add_class( $unique_class );
+    return $processed->get_updated_html();
+  }
+  ```
+- **Keep Render Callbacks Simple**: Extract complex logic to helper functions
+  ```php
+  // Before: Complex logic in render callback
+  function render_block( $attributes, $content ) {
+    // 50+ lines of processing...
+  }
+
+  // After: Extract to helper
+  function render_block( $attributes, $content ) {
+    return process_block_content( $content, $attributes );
+  }
+  ```
+- **Check Class Existence in Specific Element**: When checking if a CSS class exists before adding it, check the target element's class attribute specifically, not just anywhere in the content. This prevents false positives when the class exists in nested blocks.
+  ```php
+  // Before: Checks anywhere in content (can give false positives)
+  if ( strpos( $block_content, $css_class ) !== false ) {
+      return $block_content; // Early return if class found anywhere
+  }
+
+  // After: Check specifically in target element's class attribute
+  $pattern_check = '/(<[^>]*\bclass="[^"]*' . preg_quote( $block_class, '/' ) . '[^"]*' . preg_quote( $css_class, '/' ) . '[^"]*")/';
+  if ( preg_match( $pattern_check, $block_content ) ) {
+      return $block_content; // Only return early if class exists in target element
+  }
+  ```
+
+## Plugin Structure
+- **Organize with Section Headers**: Use visual separators to group functionality
+  ```php
+  // ============================================================================
+  // Constants
+  // ============================================================================
+
+  // ============================================================================
+  // Block Registration
+  // ============================================================================
+
+  // ============================================================================
+  // Script Enqueuing
+  // ============================================================================
+  ```
+- **Extract Plugin Path/URL**: Store plugin directory and URL as constants or class properties
+  ```php
+  const PLUGIN_DIR = __DIR__;
+  const PLUGIN_URL = plugin_dir_url( __FILE__ );
+  ```
+
+## Hooks and Filters
+- **Use Descriptive Hook Names**: Include plugin/theme prefix
+  ```php
+  // ✅ Good
+  add_action( 'init', 'plugin_name_register_blocks' );
+  add_filter( 'the_content', 'plugin_name_filter_content' );
+
+  // ❌ Bad
+  add_action( 'init', 'register' );
+  add_filter( 'the_content', 'filter' );
+  ```
+- **Document Hook Priorities**: Use appropriate priorities and document why
+  ```php
+  // Priority 9 to run before default block registration (priority 10)
+  add_action( 'init', 'register_custom_blocks', 9 );
+  ```
+
+## Block Attributes
+- **Set Defaults in block.json**: Define attribute defaults in block.json, not JavaScript
+  ```json
+  "attributes": {
+    "setting": {
+      "type": "string",
+      "default": "default-value"
+    }
+  }
+  ```
+- **Initialize Layout Attributes**: Set layout attribute in useEffect for drag-and-drop support
+  ```javascript
+  useEffect(function () {
+    if (!attributes.layout) {
+      setAttributes({
+        layout: {
+          type: 'flex',
+          orientation: 'horizontal',
+        },
+      });
+    }
+  }, [attributes.layout]);
+  ```
+
+# Architecture Patterns
+
+- **Extract to Standalone Plugin**: Move theme-specific functionality to plugins when reusable
+- **Modular Architecture**: Separate into focused classes instead of monolithic classes
+- **Remove Build Dependencies**: Use WordPress globals directly
+  ```javascript
+  // Before: Requires build step
+  import { createElement } from '@wordpress/element';
+
+  // After: Use WordPress globals
+  const { createElement: el } = wp.element;
+  ```
+
+---
+
+# Documentation Standards
+
+- **Comprehensive Docblocks**: Include purpose, parameters, return types
+- **Remove Redundant Comments**: Only comment non-obvious logic
+- **File Header Documentation**: Describe file purpose
+
+---
+
+# Decision Guide: When to Apply Which Pattern
+
+## Extract to Constant When:
+- Value appears 2+ times
+- Value might need to change
+- Value has semantic meaning (rate limit, timeout, etc.)
+
+## Simplify Conditional When:
+- Multiple early returns checking similar things
+- Simple boolean logic can be combined
+- Ternary is clearer than if/else for single values
+
+## Extract Helper Function When:
+- Pattern repeats 3+ times
+- Logic is complex enough to benefit from naming
+- Function would be reusable
+
+## Inline Function When:
+- Function used only once
+- Function adds no clarity
+- Abstraction doesn't help understanding
+
+## Use Array-Based Approach When:
+- Multiple similar features/attributes
+- Features might expand
+- Need to iterate over features
+- Registering multiple similar controls/settings (WordPress Customizer, meta boxes, etc.)
+
+## Extract Default Values to Constants When:
+- Default values appear in multiple places (get_theme_mod, get_option, etc.)
+- Defaults are related and form a logical group
+- You want a single source of truth for configuration
+
+## Extract Repeated Expensive Calls When:
+- Same function call appears 3+ times
+- Function call is expensive (file system, database, complex calculations)
+- Use static caching in helper function to avoid repeated calls
+
+## Extract to Plugin When:
+- Functionality is reusable
+- Not theme-specific
+- Could be used with other themes
