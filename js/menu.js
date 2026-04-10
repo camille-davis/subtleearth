@@ -112,9 +112,13 @@ jQuery(document).ready(function ($) {
 	$menuOpen.on('click', openMenu);
 	$menuClose.on('click', closeMenu);
 
+	// Close after clicking a menu link.
+	$('.menu-links a').on('click', closeMenu);
+
 	// Close by clicking on modal background.
 	$menuOuter.on('click', function (e) {
-		if (!$(e.target).closest('.close-menu, .menu-links').length) {
+		if (!$(e.target).closest('.menu-inner').length) {
+			console.log('clicked on modal background');
 			closeMenu();
 		}
 	});
