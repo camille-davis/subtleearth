@@ -23,6 +23,9 @@ require_once get_template_directory() . '/inc/misc-block-customizations.php';
  * @return void
  */
 function subtle_setup() {
+	// Let WordPress manage the document title via wp_head().
+	add_theme_support( 'title-tag' );
+
 	// Add support for custom logo.
 	add_theme_support( 'custom-logo' );
 
